@@ -3,18 +3,33 @@ from typing import Any, Literal, Optional, Union, List
 import re
 
 
-class TextPart(BaseModel):
-    type: str = "text"
+class ContentPart(BaseModel):
+    type: str
+
+
+class TextPart(ContentPart):
+    type: Literal["text"] = "text"
     text: str
 
 
-class ImagePart(BaseModel):
-    type: str = "image"
+class ImagePart(ContentPart):
+    type: Literal["image"] = "image"
     base64: str
     mime_type: str
 
 
-ContentPart = Union[TextPart, ImagePart]
+class FilePart(ContentPart):
+    type: Literal["file"] = "file"
+    filename: str
+    mime_type: str
+    base64: str
+
+
+AnyContentPart = Union[
+    TextPart,
+    ImagePart,
+    FilePart,
+]
 
 
 class Message(BaseModel):
@@ -25,12 +40,10 @@ class Message(BaseModel):
         content: The content of the message.
     """
 
-    model_config = {"extra": "ignore"}
-
     role: Literal["user", "assistant", "system"] = Field(
         ..., description="The role of the message sender"
     )
-    content: Union[str, List[ContentPart]] = Field(
+    content: List[AnyContentPart] = Field(
         ..., description="The content of the message", min_length=1
     )
 

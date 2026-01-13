@@ -1,20 +1,37 @@
-from pydantic import BaseModel, Field
-from typing import Literal
-from datetime import date
+from pydantic import BaseModel, Field, field_validator
+from typing import Literal, List, Optional
 
 
 class Transfer(BaseModel):
-    sender: str = Field(..., description="Sender acoount entity")
-    sender_type: Literal["user", "business"] = Field(..., description="Sender type")
-    sender_bank: str = Field(..., description="Sender bank")
+    sender: str = Field(..., description="Nombre del ordenante")
+    sender_bank: str = Field(..., description="Banco del ordenante")
 
-    receiver: str = Field(..., description="Receiver acoount entity")
-    receiver_type: Literal["user", "business"] = Field(..., description="Receiver type")
-    receiver_bank: str = Field(..., description="Receiver bank")
+    receiver: str = Field(..., description="Nombre del beneficiario")
+    receiver_bank: str = Field(..., description="Banco del beneficiario")
 
     currency: Literal["PYG", "USD", "ARS"] = Field(
-        ..., description="Transaction currency", examples=["PYG", "USD", "ARS"]
+        ..., description="Moneda de la transferencia", examples=["PYG", "USD", "ARS"]
     )
-    amount: float = Field(..., description="Transaction amount")
-    reason: str = Field(..., description="Transaction reason")
-    date: date = Field(..., description="Transaction date")
+    amount: float = Field(..., description="Monto de la transferencia")
+    reason: Optional[str] = Field(None, description="Motivo/razón de la transferencia")
+    date: str = Field(
+        ...,
+        description="Fecha de la transferencia (YYYY-MM-DD)",
+        examples=["2024-01-13"],
+    )
+
+    @field_validator(
+        "sender",
+        "sender_bank",
+        "receiver",
+        "receiver_bank",
+        "currency",
+        "reason",
+        "date",
+    )
+    def uppercase_strings(cls, v: str) -> str:
+        return v.upper()
+
+
+class Transactions(BaseModel):
+    transactions: List[Transfer]

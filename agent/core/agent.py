@@ -10,6 +10,7 @@ from agent.core.config import settings
 from agent.core.prompts import prompts
 from agent.schemas import GraphState, Message
 from agent.utils.graph import dump_messages, prepare_messages
+from agent.schemas.transaction import Transactions
 
 
 class Agent:
@@ -66,9 +67,27 @@ class Agent:
         response = self.__process_messages(response["messages"])
         return response
 
-    async def analyze_image(self, message: Message):
+    async def analyze_images(self, files: list[dict]):
         if self._graph is None:
             self._graph = self._build_graph()
+
+        message = Message(
+            role="user",
+            content=[
+                {
+                    "type": "text",
+                    "text": "Analiza estas imágenes y extrae la información solicitada.",
+                },
+                *[
+                    {
+                        "type": "image",
+                        "base64": file["base64"],
+                        "mime_type": file["mime_type"],
+                    }
+                    for file in files
+                ],
+            ],
+        )
 
         messages = prepare_messages(
             messages=[message],
@@ -76,7 +95,7 @@ class Agent:
             system_prompt=prompts.lara_system_prompt,
         )
 
-        response = await self._model.ainvoke(
+        response = await self._model.with_structured_output(Transactions).ainvoke(
             dump_messages(messages=messages),
         )
 

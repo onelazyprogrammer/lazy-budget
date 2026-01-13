@@ -28,5 +28,9 @@ class ConfigAdapter:
     def model_name(self) -> str:
         return self._get_env_var("MODEL_NAME")
 
+    @property
+    def model_temperature(self) -> float:
+        return float(self._get_env_var("MODEL_TEMPERATURE"))
+
 
 settings = ConfigAdapter()
