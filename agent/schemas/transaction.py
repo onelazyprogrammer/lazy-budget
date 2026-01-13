@@ -1,25 +1,20 @@
 from pydantic import BaseModel, Field
-from typing import List, Literal
+from typing import Literal
+from datetime import date
 
 
 class Transfer(BaseModel):
-    sender_id: str = Field(..., description="ID from sender account")
-    sender_entity: str = Field(..., description="Sender acoount entity")
-    receiver_id: str = Field(..., description="ID from receiver account")
-    receiver_entity: str = Field(..., description="Receiver acoount entity")
-    currency: Literal["USD", "PYG"] = Field(..., description="Transaction currency")
-    amount: str = Field(..., description="Transaction amount")
-    
-    
-class TransferIn(BaseModel):
-    sender_id: str = Field(..., description="ID from sender account")
-    sender_entity: str = Field(..., description="Sender acoount entity")
-    currency: Literal["USD", "PYG"] = Field(..., description="Transaction currency")
-    amount: str = Field(..., description="Transaction amount")
-    
-    
-class TransferOut(BaseModel):
-    receiver_id: str = Field(..., description="ID from receiver account")
-    receiver_entity: str = Field(..., description="Receiver acoount entity")
-    currency: Literal["USD", "PYG"] = Field(..., description="Transaction currency")
-    amount: str = Field(..., description="Transaction amount")
+    sender: str = Field(..., description="Sender acoount entity")
+    sender_type: Literal["user", "business"] = Field(..., description="Sender type")
+    sender_bank: str = Field(..., description="Sender bank")
+
+    receiver: str = Field(..., description="Receiver acoount entity")
+    receiver_type: Literal["user", "business"] = Field(..., description="Receiver type")
+    receiver_bank: str = Field(..., description="Receiver bank")
+
+    currency: Literal["PYG", "USD", "ARS"] = Field(
+        ..., description="Transaction currency", examples=["PYG", "USD", "ARS"]
+    )
+    amount: float = Field(..., description="Transaction amount")
+    reason: str = Field(..., description="Transaction reason")
+    date: date = Field(..., description="Transaction date")

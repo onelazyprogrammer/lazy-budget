@@ -18,12 +18,9 @@ async def analyze_image(file: UploadFile = File(...)):
         )
 
     try:
-        # Leer y codificar imagen
         image_bytes = await file.read()
         image_b64 = base64.b64encode(image_bytes).decode("utf-8")
 
-        # Crear mensaje multimodal usando el esquema de Message/langchain
-        # Aquí pasamos el contenido que el nodo _image_analysis_node espera
         multimodal_message = Message(
             role="user",
             content=[
