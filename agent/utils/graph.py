@@ -3,7 +3,7 @@
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import trim_messages as _trim_messages
 
-from app.schemas import Message
+from agent.schemas import Message
 
 
 def dump_messages(messages: list[Message]) -> list[dict]:
@@ -18,7 +18,9 @@ def dump_messages(messages: list[Message]) -> list[dict]:
     return [message.model_dump() for message in messages]
 
 
-def prepare_messages(messages: list[Message], llm: BaseChatModel, system_prompt: str) -> list[Message]:
+def prepare_messages(
+    messages: list[Message], llm: BaseChatModel, system_prompt: str
+) -> list[Message]:
     """Prepare the messages for the LLM.
 
     Args:
@@ -38,4 +40,6 @@ def prepare_messages(messages: list[Message], llm: BaseChatModel, system_prompt:
         include_system=False,
         allow_partial=False,
     )
-    return [Message(role="system", content=system_prompt)] + trimmed_messages
+    return [Message(role="system", content=system_prompt)] + [
+        Message(**msg) if isinstance(msg, dict) else msg for msg in trimmed_messages
+    ]
