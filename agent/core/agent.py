@@ -67,30 +67,12 @@ class Agent:
         response = self.__process_messages(response["messages"])
         return response
 
-    async def analyze_images(self, files: list[dict]):
+    async def analyze_images(self, messages: list[Message]):
         if self._graph is None:
             self._graph = self._build_graph()
 
-        message = Message(
-            role="user",
-            content=[
-                {
-                    "type": "text",
-                    "text": "Analiza estas imágenes y extrae la información solicitada.",
-                },
-                *[
-                    {
-                        "type": "image",
-                        "base64": file["base64"],
-                        "mime_type": file["mime_type"],
-                    }
-                    for file in files
-                ],
-            ],
-        )
-
         messages = prepare_messages(
-            messages=[message],
+            messages=messages,
             llm=self._model,
             system_prompt=prompts.lara_system_prompt,
         )

@@ -47,7 +47,7 @@ class Message(BaseModel):
         ..., description="The content of the message", min_length=1
     )
 
-    @field_validator("content")
+    @field_validator("content", mode="before")
     @classmethod
     def validate_content(cls, v: Any) -> Any:
         """Validate the message content."""
@@ -59,6 +59,9 @@ class Message(BaseModel):
             # Check for null bytes
             if "\0" in v:
                 raise ValueError("Content contains null bytes")
+
+            # Convert string to list of parts
+            return [{"type": "text", "text": v}]
 
         return v
 
