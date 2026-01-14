@@ -2,7 +2,7 @@ from agent.schemas.chat import ChatRequest
 from fastapi import APIRouter, HTTPException
 from agent.core.agent import agent
 
-router = APIRouter(prefix="/chat", tags=["chat"])
+router = APIRouter()
 
 
 @router.post("/")

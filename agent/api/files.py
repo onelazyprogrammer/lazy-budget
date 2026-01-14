@@ -4,7 +4,7 @@ from agent.core.agent import agent
 import base64
 from typing import List
 
-router = APIRouter(prefix="/files", tags=["files"])
+router = APIRouter()
 
 
 @router.post("/analyze-images")
