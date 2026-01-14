@@ -1,9 +1,16 @@
 from fastapi import FastAPI
 from agent.api.api import api_router
-from agent.core.config import settings
+from agent.services.database import database_service
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="Lazy Budget API")
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    await database_service.dispose()
+
+app = FastAPI(title="Lazy Budget API", lifespan=lifespan)
 app.include_router(api_router, prefix="/api/v1")
 
 

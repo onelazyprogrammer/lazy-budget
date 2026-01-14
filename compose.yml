@@ -1,0 +1,45 @@
+services:
+  agent:
+    container_name: lazy-agent
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./agent:/app/agent
+    environment:
+      - PYTHONPATH=/app
+    restart: always
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U onelazyprogrammer"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    environment:
+      - POSTGRES_USER=${DB_USER:?error}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:?error}
+      - TZ=America/Asuncion
+      - PGTZ=America/Asuncion
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    volumes:
+      - ./db-scripts:/docker-entrypoint-initdb.d
+      - postgres_volume:/var/lib/postgresql/data
+    networks:
+      - lazy-budget-network
+
+networks:
+  lazy-budget-network:
+    name: lazy-budget-network
+
+volumes:
+  postgres_volume:
+    driver: local

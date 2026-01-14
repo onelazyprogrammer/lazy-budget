@@ -19,6 +19,30 @@ class ConfigAdapter:
                 f"La variable de entorno '{key}' no está definida y no tiene valor por defecto."
             )
         return value
+    
+    @property
+    def access_token_expire_minutes(self) -> str:
+        return self._get_env_var("ACCESS_TOKEN_EXPIRE_MINUTES")
+
+    @property
+    def jwt_secret_key(self) -> str:
+        return self._get_env_var("JWT_SECRET_KEY")
+
+    @property
+    def jwt_algorithm(self) -> str:
+        return self._get_env_var("JWT_ALGORITHM")
+
+    @property
+    def db_name(self) -> str:
+        return self._get_env_var("DB_NAME")
+
+    @property
+    def db_user(self) -> str:
+        return self._get_env_var("DB_USER")
+
+    @property
+    def db_password(self) -> str:
+        return self._get_env_var("DB_PASSWORD")
 
     @property
     def gemini_api_key(self) -> str:
