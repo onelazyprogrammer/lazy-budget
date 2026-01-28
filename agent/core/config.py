@@ -19,10 +19,10 @@ class ConfigAdapter:
                 f"La variable de entorno '{key}' no está definida y no tiene valor por defecto."
             )
         return value
-    
+
     @property
-    def access_token_expire_minutes(self) -> str:
-        return self._get_env_var("ACCESS_TOKEN_EXPIRE_MINUTES")
+    def access_token_expire_minutes(self) -> int:
+        return int(self._get_env_var("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
     @property
     def jwt_secret_key(self) -> str:
@@ -55,6 +55,18 @@ class ConfigAdapter:
     @property
     def model_temperature(self) -> float:
         return float(self._get_env_var("MODEL_TEMPERATURE"))
+
+    @property
+    def db_host(self) -> str:
+        return self._get_env_var("DB_HOST", "localhost")
+
+    @property
+    def db_port(self) -> int:
+        return int(self._get_env_var("DB_PORT", "5432"))
+
+    @property
+    def database_url(self) -> str:
+        return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
 
 settings = ConfigAdapter()

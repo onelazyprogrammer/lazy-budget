@@ -12,6 +12,12 @@ services:
       - ./agent:/app/agent
     environment:
       - PYTHONPATH=/app
+      - DB_HOST=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - lazy-budget-network
     restart: always
 
   postgres:

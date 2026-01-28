@@ -1,14 +1,21 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
-from agent.schemas.chat import Message
-from agent.core.agent import agent
 import base64
-from typing import List
+
+from typing import List, Annotated
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+
+from agent.api.auth import get_current_active_user
+from agent.schemas.chat import Message
+from agent.schemas.user import User
+from agent.core.agent import agent
 
 router = APIRouter()
 
 
 @router.post("/analyze-images")
-async def analyze_images(files: List[UploadFile] = File(...),):
+async def analyze_images(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    files: List[UploadFile] = File(...),
+):
     if len(files) > 5:
         raise HTTPException(
             status_code=422, detail="You can upload a maximum of 5 files."
@@ -51,4 +58,3 @@ async def analyze_images(files: List[UploadFile] = File(...),):
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
