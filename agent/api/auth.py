@@ -1,4 +1,5 @@
 import jwt
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,9 +8,16 @@ from typing import Annotated
 from agent.schemas.auth import Token, TokenData
 from agent.core.config import settings
 from agent.db.database import get_db
+from agent.db.redis import get_redis
 from agent.schemas.user import User, UserCreate, UserRead
 from agent.repositories.user_repository import UserRepository
-from agent.utils.auth import verify_password, get_password_hash, create_access_token, is_token_expired
+from agent.repositories.token_repository import TokenRepository
+from agent.utils.auth import (
+    verify_password,
+    get_password_hash,
+    create_access_token,
+    is_token_expired,
+)
 
 router = APIRouter()
 
@@ -64,17 +72,25 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
-    
-    
+
     try:
         payload = jwt.decode(
             token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm]
         )
 
         token_expiration = payload.get("exp")
-        
+
         if is_token_expired(token_expiration):
+            raise credentials_exception
+
+        # Check if token has been blocklisted (logged out)
+        jti: str | None = payload.get("jti")
+        if jti is None:
+            raise credentials_exception
+
+        redis = await get_redis()
+        token_repo = TokenRepository(redis)
+        if await token_repo.is_token_blocklisted(jti):
             raise credentials_exception
 
         username: str | None = payload.get("sub")
@@ -186,6 +202,40 @@ async def login_for_access_token(
         )
     access_token = create_access_token(data={"sub": user.username})
     return Token(access_token=access_token, token_type="bearer")
+
+
+@router.post("/logout")
+async def logout(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    current_user: Annotated[User, Depends(get_current_active_user)],
+):
+    """
+    Logout the current user by blocklisting their JWT token.
+
+    The token is added to a Redis blocklist with a TTL matching
+    its remaining lifetime. Subsequent requests with this token
+    will be rejected.
+
+    Returns:
+        Success message
+    """
+    payload = jwt.decode(
+        token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm]
+    )
+    jti = payload.get("jti")
+    exp = payload.get("exp")
+
+    # Calculate remaining TTL so the blocklist entry auto-expires
+    exp_datetime = datetime.fromtimestamp(exp, timezone.utc)
+    now = datetime.now(timezone.utc)
+    ttl_seconds = int((exp_datetime - now).total_seconds())
+
+    if ttl_seconds > 0:
+        redis = await get_redis()
+        token_repo = TokenRepository(redis)
+        await token_repo.blocklist_token(jti, ttl_seconds)
+
+    return {"detail": "Successfully logged out"}
 
 
 @router.get("/users/me/", response_model=UserRead)

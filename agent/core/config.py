@@ -65,6 +65,14 @@ class ConfigAdapter:
         return int(self._get_env_var("DB_PORT", "5432"))
 
     @property
+    def redis_host(self) -> str:
+        return self._get_env_var("REDIS_HOST", "localhost")
+
+    @property
+    def redis_port(self) -> int:
+        return int(self._get_env_var("REDIS_PORT", "6379"))
+
+    @property
     def database_url(self) -> str:
         return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 

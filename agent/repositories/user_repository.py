@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
 
-from agent.schemas.user import User, UserCreate
+from agent.schemas.user import User, UserCreate, UserRead
 
 
 class UserRepository:
@@ -11,16 +11,18 @@ class UserRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_by_username(self, username: str) -> Optional[User]:
+    async def get_by_username(self, username: str) -> Optional[UserRead]:
         """Fetch a user by username."""
         result = await self.session.execute(
-            select(User).where(User.username == username)
+            select(UserRead).where(UserRead.username == username)
         )
         return result.scalar_one_or_none()
 
-    async def get_by_email(self, email: str) -> Optional[User]:
+    async def get_by_email(self, email: str) -> Optional[UserRead]:
         """Fetch a user by email."""
-        result = await self.session.execute(select(User).where(User.email == email))
+        result = await self.session.execute(
+            select(UserRead).where(UserRead.email == email)
+        )
         return result.scalar_one_or_none()
 
     async def create(self, user_data: UserCreate, hashed_password: str) -> User:

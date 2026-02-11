@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from sqlmodel import SQLModel
 
 from agent.db.database import engine
+from agent.db.redis import get_redis, close_redis
 
 
 @asynccontextmanager
@@ -11,7 +12,11 @@ async def lifespan(app: FastAPI):
     # Startup: Create tables if they don't exist
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
+    # Startup: Connect to Redis
+    await get_redis()
     yield
+    # Shutdown: Close Redis connection
+    await close_redis()
     # Shutdown: Dispose engine
     await engine.dispose()
 
