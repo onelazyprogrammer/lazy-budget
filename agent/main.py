@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from agent.api.api import api_router
+from agent.middleware import LoggingMiddleware
 from contextlib import asynccontextmanager
 from sqlmodel import SQLModel
 
@@ -22,6 +23,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Lazy Budget API", lifespan=lifespan)
+
+# Add logging middleware
+app.add_middleware(LoggingMiddleware)
+
 app.include_router(api_router, prefix="/api/v1")
 
 
