@@ -1,11 +1,15 @@
 from fastapi import FastAPI
 from agent.api.api import api_router
 from agent.middleware import LoggingMiddleware
+from agent.utils.logging import setup_logging
 from contextlib import asynccontextmanager
 from sqlmodel import SQLModel
 
 from agent.db.database import engine
 from agent.db.redis import get_redis, close_redis
+
+# Configure logging at startup
+setup_logging()
 
 
 @asynccontextmanager

@@ -1,38 +1,60 @@
 import logging
-import json
-from datetime import datetime
-from logging import Logger
+import logging.config
+from typing import Optional
+
+# Standard logging configuration for FastAPI services
+# Follows uvicorn/gunicorn format: timestamp | level | message
+LOGGING_CONFIG = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "%(asctime)s | %(levelname)-8s | %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+            "stream": "ext://sys.stdout",
+        },
+    },
+    "loggers": {
+        "agent": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "uvicorn.error": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "uvicorn.access": {
+            "handlers": [],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+}
 
 
-class JSONFormatter(logging.Formatter):
-    """Custom formatter that outputs logs as JSON lines for easy parsing."""
+def setup_logging() -> None:
+    """Configure logging with standard format for FastAPI services.
 
-    def format(self, record: logging.LogRecord) -> str:
-        """Format log record as JSON."""
-        log_data = {
-            "timestamp": datetime.fromtimestamp(record.created).isoformat(),
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-        }
-
-        # Include extra fields from the record
-        if hasattr(record, "extra"):
-            log_data.update(record.extra)
-
-        return json.dumps(log_data)
+    Call this once at application startup to apply standard logging configuration.
+    """
+    logging.config.dictConfig(LOGGING_CONFIG)
 
 
-def get_logger(name: str) -> Logger:
-    """Get or create a configured logger with JSON formatting."""
-    logger = logging.getLogger(name)
+def get_logger(name: str) -> logging.Logger:
+    """Get a configured logger instance.
 
-    # Only configure if handlers don't exist
-    if not logger.handlers:
-        handler = logging.StreamHandler()
-        handler.setFormatter(JSONFormatter())
-        logger.addHandler(handler)
-        logger.setLevel(logging.INFO)
-        logger.propagate = False
+    Args:
+        name: Logger name (typically __name__)
 
-    return logger
+    Returns:
+        Configured logger instance
+    """
+    return logging.getLogger(name)
