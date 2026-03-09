@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from agent.api.api import api_router
 from agent.middleware import LoggingMiddleware
 from agent.utils.logging import setup_logging
 from contextlib import asynccontextmanager
@@ -7,31 +6,30 @@ from sqlmodel import SQLModel
 
 from agent.db.database import engine
 from agent.db.redis import get_redis, close_redis
+from agent.auth.router import router as auth_router
+from agent.chat.router import router as chat_router
+from agent.files.router import router as files_router
 
-# Configure logging at startup
 setup_logging()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Create tables if they don't exist
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
-    # Startup: Connect to Redis
     await get_redis()
     yield
-    # Shutdown: Close Redis connection
     await close_redis()
-    # Shutdown: Dispose engine
     await engine.dispose()
 
 
 app = FastAPI(title="Lazy Budget API", lifespan=lifespan)
 
-# Add logging middleware
 app.add_middleware(LoggingMiddleware)
 
-app.include_router(api_router, prefix="/api/v1")
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(chat_router, prefix="/api/v1/chat", tags=["chat"])
+app.include_router(files_router, prefix="/api/v1/files", tags=["files"])
 
 
 @app.get("/")

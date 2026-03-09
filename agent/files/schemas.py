@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import Literal, List, Optional
+
+
 class Transfer(BaseModel):
     sender: Optional[str] = Field(..., description="Nombre del ordenante")
     sender_bank: Optional[str] = Field(..., description="Banco del ordenante")
@@ -33,3 +35,12 @@ class Transfer(BaseModel):
 
 class Transactions(BaseModel):
     transactions: List[Transfer]
+
+
+class ImageAnalysis(BaseModel):
+    summary: str
+    detected_objects: List[str]
+    is_receipt: bool
+    currency: Optional[str] = None
+    total_amount: Optional[float] = None
+    date: Optional[str] = None

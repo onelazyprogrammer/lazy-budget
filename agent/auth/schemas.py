@@ -1,12 +1,12 @@
 import uuid
 from datetime import datetime
-from sqlmodel import SQLModel, Field
 from typing import Optional
+
+from pydantic import BaseModel
+from sqlmodel import SQLModel, Field
 
 
 class UserBase(SQLModel):
-    """Base user model with shared fields."""
-
     username: str = Field(unique=True, index=True)
     email: str = Field(unique=True, index=True)
     full_name: Optional[str] = None
@@ -14,8 +14,6 @@ class UserBase(SQLModel):
 
 
 class User(UserBase, table=True):
-    """Database model for users table."""
-
     __tablename__ = "users"
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -24,8 +22,6 @@ class User(UserBase, table=True):
 
 
 class UserCreate(SQLModel):
-    """Schema for creating a new user."""
-
     username: str
     email: str
     password: str
@@ -33,7 +29,15 @@ class UserCreate(SQLModel):
 
 
 class UserRead(UserBase):
-    """Schema for reading user data (excludes password)."""
-
     id: uuid.UUID
     created_at: datetime
+    token: Optional[str] = None
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: str | None = None

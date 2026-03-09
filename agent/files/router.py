@@ -3,10 +3,10 @@ import base64
 from typing import List, Annotated
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 
-from agent.api.auth import get_current_active_user
-from agent.schemas.chat import Message
-from agent.schemas.user import User
+from agent.auth.router import get_current_active_user
+from agent.auth.schemas import User
 from agent.core.agent import agent
+from agent.core.schemas import Message
 
 router = APIRouter()
 

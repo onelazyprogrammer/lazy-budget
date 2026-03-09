@@ -8,9 +8,9 @@ from typing import Optional
 
 from agent.core.config import settings
 from agent.core.prompts import prompts
-from agent.schemas import GraphState, Message
+from agent.core.schemas import GraphState, Message
 from agent.utils.graph import dump_messages, prepare_messages
-from agent.schemas.transaction import Transactions
+from agent.files.schemas import Transactions
 
 
 class Agent:

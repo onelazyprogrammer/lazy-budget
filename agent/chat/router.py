@@ -1,5 +1,6 @@
-from agent.schemas.chat import ChatRequest
 from fastapi import APIRouter, HTTPException
+
+from agent.chat.schemas import ChatRequest
 from agent.core.agent import agent
 
 router = APIRouter()
@@ -9,9 +10,7 @@ router = APIRouter()
 async def chat(message: ChatRequest):
     try:
         result = await agent.get_response(message.messages)
-
         return result
-
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail=str(e))
