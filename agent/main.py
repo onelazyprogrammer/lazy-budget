@@ -6,9 +6,12 @@ from sqlmodel import SQLModel
 
 from agent.db.database import engine
 from agent.db.redis import get_redis, close_redis
+from agent.db.checkpointer import open_checkpointer, close_checkpointer
 from agent.auth.router import router as auth_router
 from agent.chat.router import router as chat_router
+from agent.chat.schemas import Conversation  # registers table with SQLModel.metadata
 from agent.files.router import router as files_router
+from agent.core.agent import agent
 
 setup_logging()
 
@@ -18,8 +21,11 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     await get_redis()
+    checkpointer = await open_checkpointer()
+    agent.initialize(checkpointer)
     yield
     await close_redis()
+    await close_checkpointer()
     await engine.dispose()
 
 

@@ -5,7 +5,6 @@ from langchain_core.messages import BaseMessage, convert_to_openai_messages
 
 from typing import Optional
 
-
 from agent.core.config import settings
 from agent.core.prompts import prompts
 from agent.core.schemas import GraphState, Message
@@ -22,8 +21,14 @@ class Agent:
         )
         self._graph: Optional[CompiledStateGraph] = None
 
-    async def _inference_node(self, state: GraphState) -> GraphState:
+    def initialize(self, checkpointer) -> None:
+        builder = StateGraph(GraphState)
+        builder.add_node("inference_node", self._inference_node)
+        builder.add_edge(START, "inference_node")
+        builder.add_edge("inference_node", END)
+        self._graph = builder.compile(checkpointer=checkpointer)
 
+    async def _inference_node(self, state: GraphState) -> GraphState:
         messages = prepare_messages(
             messages=state.messages,
             llm=self._model,
@@ -44,33 +49,22 @@ class Agent:
             if message["role"] in ["assistant", "user"] and message["content"]
         ]
 
-    def _build_graph(self) -> Optional[CompiledStateGraph]:
-
-        if self._graph is not None:
-            return self._graph
-
-        builder = StateGraph(GraphState)
-        builder.add_node("inference_node", self._inference_node)
-        builder.add_edge(START, "inference_node")
-        builder.add_edge("inference_node", END)
-
-        self._graph = builder.compile()
-        return self._graph
-
-    async def get_response(self, messages: list[Message]):
-        if self._graph is None:
-            self._graph = self._build_graph()
-
+    async def get_response(self, thread_id: str, user_message: Message) -> list[Message]:
+        config = {"configurable": {"thread_id": thread_id}}
         response = await self._graph.ainvoke(
-            {"messages": dump_messages(messages=messages)}
+            {"messages": dump_messages(messages=[user_message])},
+            config=config,
         )
-        response = self.__process_messages(response["messages"])
-        return response
+        return self.__process_messages(response["messages"])
+
+    async def get_history(self, thread_id: str) -> list[Message]:
+        config = {"configurable": {"thread_id": thread_id}}
+        state = await self._graph.aget_state(config)
+        if state is None or not state.values:
+            return []
+        return self.__process_messages(state.values.get("messages", []))
 
     async def analyze_images(self, messages: list[Message]):
-        if self._graph is None:
-            self._graph = self._build_graph()
-
         messages = prepare_messages(
             messages=messages,
             llm=self._model,
